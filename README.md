@@ -34,12 +34,19 @@ as early as possible, before skb creation).
 
 ### Requirements
 
+For building locally:
+
 ```
 go 1.17
 clang
 llvm
 llvm-strip
 libc6-dev-i386
+```
+
+For building the container itself:
+```shell
+docker
 ```
 
 ### Steps

@@ -16,8 +16,6 @@ RUN go generate ./bpf && \
 # Should be switched to a gcr.io/distroless image for prod purposes, but for now I need the ability to pop a shell
 FROM debian:stable-slim AS final
 
-# RUN useradd -Ms /usr/sbin/nologin user && echo "user hard memlock -1"
 COPY --from=build /src/app/dist/bpf /usr/local/bin/teleport-challenge
 
-# USER user
 CMD "/usr/local/bin/teleport-challenge"
