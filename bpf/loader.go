@@ -1,4 +1,4 @@
-package main
+package bpf
 
 import (
 	"encoding/binary"
@@ -89,4 +89,30 @@ func main() {
 
 		log.Printf("\n")
 	}
+}
+
+// LoadAndAttach loads the eBPF XDP program with it maps and attaches them to the given interface.
+func LoadAndAttach(iface int) (*ebpf.Map, *ebpf.Map, *ebpf.Map) {
+	// Allow the current process to lock memory for eBPF resources.
+	if err := rlimit.RemoveMemlock(); err != nil {
+		log.Fatal(err)
+	}
+
+	objs := bpfObjects{}
+	if err := loadBpfObjects(&objs, nil); err != nil {
+		log.Fatalf("Error loading BPF objects: %v", err)
+	}
+
+	log.Println("BPF objects loaded")
+
+	if _, err := link.AttachXDP(link.XDPOptions{
+		Program:   objs.XdpProgMain,
+		Interface: iface, // TODO: discover the right interface instead of attaching to loopback
+		Flags:     0,
+	}); err != nil {
+		log.Fatalf("Error attaching XDP program: %v", err)
+	}
+
+	log.Println("XDP program attached")
+	return objs.TcpConnectionTrackingMap, objs.IpMetricMap, objs.IpMetricMap
 }
