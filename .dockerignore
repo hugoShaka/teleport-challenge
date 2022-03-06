@@ -1,0 +1,7 @@
+# Ignore everything
+**
+
+# Add only necessary file to the context
+!bpf/
+!go.mod
+!go.sum
