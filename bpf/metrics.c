@@ -87,6 +87,13 @@ int xdp_prog_main(struct xdp_md *ctx) {
     u32 source_ip = ip_header->saddr;
     u16 port = tcp_header->dest;
 
+    // Drop the packet is the IP is blocked
+    u64 *blocked_time;
+    blocked_time = bpf_map_lookup_elem(&ip_blocked_map, &source_ip);
+    if (blocked_time) {
+        return XDP_DROP;
+    }
+
     ip_metric *metric = NULL;
     metric = bpf_map_lookup_elem(&ip_metric_map, &source_ip);
 

@@ -12,7 +12,7 @@ import (
 // Note: include is hardcoded to x86_64, this could be changed via Makefile to support arm64
 // a better way could be to vendor linux headers and provide an arch-independent mapping like
 // https://github.com/cilium/cilium/commit/8b3435f91af72dfbc2eef13f463b95ec08faec55
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS bpf metrics.c -- -I/usr/include/x86_64-linux-gnu
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS bpf metrics.c -- -I/usr/include/x86_64-linux-gnu
 
 // TODO: This is a proof-of-concept, this should be broken into smaller packages at some point
 func main() {
@@ -40,6 +40,14 @@ func main() {
 	}
 
 	log.Println("XDP program attached")
+
+	// Test blocklist
+	var localhostKey uint32 = 16777343
+	var localhostValue uint64 = 0
+	err := objs.IpBlockedMap.Put(localhostKey, localhostValue)
+	if err != nil {
+		log.Fatalf("Error adding localhost to the blocked ips list: %v", err)
+	}
 
 	// TODO: clean this
 	var key uint32
