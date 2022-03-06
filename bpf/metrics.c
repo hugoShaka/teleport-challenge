@@ -83,9 +83,11 @@ int xdp_prog_main(struct xdp_md *ctx) {
         return XDP_PASS;
     }
 
-    // We retrieve the source ip and port
+    // We retrieve source and dest IP/port
     u32 source_ip = ip_header->saddr;
-    u16 port = tcp_header->dest;
+    u32 dest_ip = ip_header->daddr;
+    u16 source_port = tcp_header->source;
+    u16 dest_port = tcp_header->dest;
 
     // Drop the packet is the IP is blocked
     u64 *blocked_time;
@@ -105,17 +107,25 @@ int xdp_prog_main(struct xdp_md *ctx) {
         // If this is a new port we register it
         // Please note that ip_metric.ports is not exactly a LRU buffer: if a port was already seen it won't be moved
         // back to the first position
-        if (! port_is_in_ip_metric(metric, port)) {
-            add_port_to_ip_metric(metric, port);
+        if (! port_is_in_ip_metric(metric, dest_port)) {
+            add_port_to_ip_metric(metric, dest_port);
         }
         bpf_map_update_elem(&ip_metric_map, &ip_header->saddr, metric, BPF_ANY);
     }
     else {
         ip_metric initval = {};
         initval.syn_received = 1;
-        initval.ports[0] = port;
+        initval.ports[0] = dest_port;
         bpf_map_update_elem(&ip_metric_map, &ip_header->saddr, &initval, BPF_ANY);
     }
+
+    tcp_connection connection = {};
+    connection.source_ip = source_ip;
+    connection.dest_ip = dest_ip;
+    connection.source_port = source_port;
+    connection.dest_port = dest_port;
+
+    bpf_map_push_elem(&tcp_connection_tracking_map, &connection, 0);
 
     return XDP_PASS;
 }

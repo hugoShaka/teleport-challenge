@@ -61,8 +61,9 @@ type bpfProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfMapSpecs struct {
-	IpBlockedMap *ebpf.MapSpec `ebpf:"ip_blocked_map"`
-	IpMetricMap  *ebpf.MapSpec `ebpf:"ip_metric_map"`
+	IpBlockedMap             *ebpf.MapSpec `ebpf:"ip_blocked_map"`
+	IpMetricMap              *ebpf.MapSpec `ebpf:"ip_metric_map"`
+	TcpConnectionTrackingMap *ebpf.MapSpec `ebpf:"tcp_connection_tracking_map"`
 }
 
 // bpfObjects contains all objects after they have been loaded into the kernel.
@@ -84,14 +85,16 @@ func (o *bpfObjects) Close() error {
 //
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfMaps struct {
-	IpBlockedMap *ebpf.Map `ebpf:"ip_blocked_map"`
-	IpMetricMap  *ebpf.Map `ebpf:"ip_metric_map"`
+	IpBlockedMap             *ebpf.Map `ebpf:"ip_blocked_map"`
+	IpMetricMap              *ebpf.Map `ebpf:"ip_metric_map"`
+	TcpConnectionTrackingMap *ebpf.Map `ebpf:"tcp_connection_tracking_map"`
 }
 
 func (m *bpfMaps) Close() error {
 	return _BpfClose(
 		m.IpBlockedMap,
 		m.IpMetricMap,
+		m.TcpConnectionTrackingMap,
 	)
 }
 

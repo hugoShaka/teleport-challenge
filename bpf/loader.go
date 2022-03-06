@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/binary"
+	"errors"
+	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/rlimit"
 	"inet.af/netaddr"
@@ -42,23 +44,27 @@ func main() {
 	log.Println("XDP program attached")
 
 	// Test blocklist
-	var localhostKey uint32 = 16777343
-	var localhostValue uint64 = 0
-	err := objs.IpBlockedMap.Put(localhostKey, localhostValue)
-	if err != nil {
-		log.Fatalf("Error adding localhost to the blocked ips list: %v", err)
-	}
+	/*
+		var localhostKey uint32 = 16777343
+		var localhostValue uint64 = 0
+		err := objs.IpBlockedMap.Put(localhostKey, localhostValue)
+		if err != nil {
+			log.Fatalf("Error adding localhost to the blocked ips list: %v", err)
+		}
+	*/
 
 	// TODO: clean this
 	var key uint32
 	keyb := make([]byte, 4)
 	var keyb4 [4]byte
 	var value [][]byte
+	var rawConnection []byte
 	var ip netaddr.IP
 
 	ticker := time.NewTicker(1 * time.Second)
 
 	for range ticker.C {
+		// Checking IP metrics to decide IP block
 		values := objs.IpMetricMap.Iterate()
 		for values.Next(&key, &value) {
 			binary.LittleEndian.PutUint32(keyb, key)
@@ -71,7 +77,14 @@ func main() {
 
 		err := values.Err()
 		if err != nil {
-			log.Printf("Error: %s", err)
+			log.Printf("Error reading ip_metic_map: %s", err)
+		}
+
+		for err = objs.TcpConnectionTrackingMap.LookupAndDelete(nil, &rawConnection); err == nil; err = objs.TcpConnectionTrackingMap.LookupAndDelete(nil, &rawConnection) {
+			log.Printf("Connections detected: %v", rawConnection)
+		}
+		if err != nil && !errors.Is(err, ebpf.ErrKeyNotExist) {
+			log.Printf("Error reading tcp_connection_tracking_map: %s", err)
 		}
 
 		log.Printf("\n")
