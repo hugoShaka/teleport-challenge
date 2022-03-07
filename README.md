@@ -66,7 +66,7 @@ Wrote /home/shaka/perso/teleport-challenge/bpf/bpf_bpfeb.go
 
 Build the go binary by running
 ```shell
-go build -o dist/ github.com/hugoshaka/teleport-challenge/bpf
+go build -o dist/ github.com/hugoshaka/teleport-challenge/cmd/teleport-challenge
 ```
 
 Build the docker container (this is a self-sufficient command, it will rebuild both bpf and golang)
@@ -89,5 +89,5 @@ Without docker as root
 
 ```shell
 ulimit -l unlimited
-./dist/bpf
+./dist/teleport-challenge
 ```

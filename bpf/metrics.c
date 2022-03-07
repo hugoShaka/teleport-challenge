@@ -78,8 +78,8 @@ int xdp_prog_main(struct xdp_md *ctx) {
         return XDP_DROP;
     }
 
-    // If there's no SYN flag this packet is about an established connection, thus we can stop here.
-    if (!tcp_header->syn){
+    // We want to catch only the first packet of the three-way handshake: SYN, SYN+ACK, ACK.
+    if (!tcp_header->syn || tcp_header->ack){
         return XDP_PASS;
     }
 
