@@ -3,5 +3,7 @@
 
 # Add only necessary file to the context
 !bpf/
+!cmd/
+!pkg/
 !go.mod
 !go.sum

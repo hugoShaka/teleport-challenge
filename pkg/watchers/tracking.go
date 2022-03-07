@@ -27,7 +27,8 @@ func (w *trackingWatcher) Run(ctx context.Context) error {
 	for range ticker.C {
 		select {
 		case <-ctx.Done():
-			break
+			log.Println("Stopping tracking watcher")
+			return nil
 
 		default:
 			err := w.printConnections()

@@ -62,6 +62,7 @@ Options:
 	workGroup.Go(func() error { return trackingWatcher.Run(ctx) })
 	workGroup.Go(func() error { return blockingWatcher.Run(ctx) })
 
+	// TODO: put this in the workgroup, this blocks graceful shutdown
 	http.Handle("/metrics", promhttp.Handler())
 	http.ListenAndServe(monitoringEndpoint, nil)
 
