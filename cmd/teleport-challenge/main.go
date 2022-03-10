@@ -29,14 +29,17 @@ func main() {
 Leverages eBPF to log all incoming IPv4 TCP connections and block scanning IPs from contacting the server.
 
 Usage:
-  teleport-challenge [--interface=<if>]
+  teleport-challenge [--interface=<if>] [--tracking-period=<tp>] [--detect-scan-period=<dp>] [--threshold=<n>]
   teleport-challenge -h | --help
   teleport-challenge --version
 
 Options:
-  -h --help                  Show this screen.
-  --version                  Show version.
-  -i --interface=<if>        Interface to watch [default: "lo"].`
+  -h --help                     Show this screen.
+  --version                     Show version.
+  -i --interface=<if>           Interface to watch [default: lo].
+  -t --tracking-period=<tp>     Poll interval to read new connections [default: 1s].
+  -d --detect-scan-period=<dp>  Poll interval to detect port scans [default: 1m].
+  -n --threshold=<n>            IPs connecting to more ports than <n> in the last <dp> will be banned [default: 3].`
 
 	// Initialize context and parse arguments
 	ctx, cancel := makeContext()
@@ -45,9 +48,12 @@ Options:
 	arguments, _ := docopt.ParseDoc(usage)
 	fmt.Println(arguments)
 	// TODO: get values from argv
-	trackingPeriod, _ := time.ParseDuration("1s")
-	blockingPeriod, _ := time.ParseDuration("1m")
-	blockThreshold := 3
+
+	rawTrackingPeriod, _ := arguments.String("--tracking-period")
+	trackingPeriod, _ := time.ParseDuration(rawTrackingPeriod)
+	rawBlockingPeriod, _ := arguments.String("--detect-scan-period")
+	blockingPeriod, _ := time.ParseDuration(rawBlockingPeriod)
+	blockThreshold, _ := arguments.Int("--threshold")
 	iface := 1
 
 	// Load BPF objects
