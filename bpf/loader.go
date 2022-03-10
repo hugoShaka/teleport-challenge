@@ -114,5 +114,5 @@ func LoadAndAttach(iface int) (*ebpf.Map, *ebpf.Map, *ebpf.Map) {
 	}
 
 	log.Println("XDP program attached")
-	return objs.TcpConnectionTrackingMap, objs.IpMetricMap, objs.IpMetricMap
+	return objs.TcpConnectionTrackingMap, objs.IpMetricMap, objs.IpBlockedMap
 }
