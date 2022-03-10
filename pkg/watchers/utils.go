@@ -56,3 +56,27 @@ func mergeIPMetric(metrics []*ipMetric) *ipMetric {
 
 	return &result
 }
+
+type tcpConnection struct {
+	sourceIP   netaddr.IP
+	destIP     netaddr.IP
+	sourcePort uint16
+	destPort   uint16
+}
+
+func (c *tcpConnection) String() string {
+	return fmt.Sprintf("%s:%d -> %s:%d", c.sourceIP, c.sourcePort, c.destIP, c.destPort)
+}
+
+func unmarshallTCPConnection(data [12]byte) *tcpConnection {
+	sourceIP := netaddr.IPFrom4([4]byte{data[0], data[1], data[2], data[3]})
+	destIP := netaddr.IPFrom4([4]byte{data[4], data[5], data[6], data[7]})
+	sourcePort := binary.BigEndian.Uint16(data[8:10])
+	destPort := binary.BigEndian.Uint16(data[10:12])
+	return &tcpConnection{
+		sourceIP:   sourceIP,
+		destIP:     destIP,
+		sourcePort: sourcePort,
+		destPort:   destPort,
+	}
+}

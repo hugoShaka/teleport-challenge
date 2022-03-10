@@ -47,6 +47,42 @@ func TestUnmarshallIPMetric(t *testing.T) {
 	}
 }
 
+func TestUnmarshallTCPConnection(t *testing.T) {
+	testCases := []struct {
+		name     string
+		data     [12]byte
+		expected *tcpConnection
+	}{
+		{
+			"LocalhostToLocalhost",
+			[12]byte{127, 0, 0, 1, 127, 0, 0, 1, 139, 98, 31, 148},
+			&tcpConnection{
+				sourceIP:   netaddr.IPv4(127, 0, 0, 1),
+				destIP:     netaddr.IPv4(127, 0, 0, 1),
+				sourcePort: 35682,
+				destPort:   8084,
+			},
+		},
+		{
+			"NullSourceIP",
+			[12]byte{0, 0, 0, 0, 127, 0, 0, 1, 139, 98, 31, 148},
+			&tcpConnection{
+				sourceIP:   netaddr.IPv4(0, 0, 0, 0),
+				destIP:     netaddr.IPv4(127, 0, 0, 1),
+				sourcePort: 35682,
+				destPort:   8084,
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := unmarshallTCPConnection(tc.data)
+
+			assert.Equal(t, tc.expected, result)
+		})
+
+	}
+}
 func TestMergeIPMetric(t *testing.T) {
 	testCases := []struct {
 		name     string
