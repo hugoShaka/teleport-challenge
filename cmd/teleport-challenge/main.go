@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	appName     = "teleport-challenge"
-	metricsPort = 8080
+	metricsPort                = 8080
+	metricServerTimeoutSeconds = 5
 )
 
 var (
@@ -62,19 +62,34 @@ Options:
 	workGroup.Go(func() error { return trackingWatcher.Run(ctx) })
 	workGroup.Go(func() error { return blockingWatcher.Run(ctx) })
 
-	// TODO: put this in the workgroup, this blocks graceful shutdown
-	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(monitoringEndpoint, nil)
+	// Setup monitoring server
+	server := http.Server{
+		Addr:              monitoringEndpoint,
+		Handler:           promhttp.Handler(),
+		IdleTimeout:       metricServerTimeoutSeconds,
+		ReadTimeout:       metricServerTimeoutSeconds,
+		WriteTimeout:      metricServerTimeoutSeconds,
+		ReadHeaderTimeout: metricServerTimeoutSeconds,
+	}
+	workGroup.Go(func() error { return server.ListenAndServe() })
+	// To have a graceful shutdown we register a coroutine waiting for context cancellation and stopping the server
+	go func() {
+		if <-ctx.Done(); true {
+			stopCtx, cancel := context.WithTimeout(context.Background(), metricServerTimeoutSeconds*time.Second)
+			defer cancel()
+			log.Println("Stopping monitoring server")
+			_ = server.Shutdown(stopCtx)
+		}
+	}()
 
 	// Wait for an error or context cancellation
 	exitCode := 0
-
 	if err := workGroup.Wait(); err != nil {
 		switch err {
-		case context.Canceled:
+		case context.Canceled, http.ErrServerClosed:
 			log.Println("Shutting down")
 		default:
-			log.Println("Unhandled error received: %v", err)
+			log.Printf("Unhandled error received: %v", err)
 			exitCode = 1
 		}
 	}
