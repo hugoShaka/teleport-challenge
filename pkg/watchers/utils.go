@@ -3,11 +3,13 @@ package watchers
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
+	"inet.af/netaddr"
 )
 
 type ipMetric struct {
 	synReceived uint64
-	ports       []uint16
+	ports       map[uint16]bool // this map acts as a set
 }
 
 // unmarshalIPMetric converts an eBPF ip_metric into an ipMetric go struct.
@@ -21,13 +23,13 @@ func unmarshalIPMetric(data []byte) (*ipMetric, error) {
 	synReceived, _ := binary.Uvarint(data[:8])
 	numPorts := (len(data) - 8) / 2
 
-	ports := make([]uint16, 0, numPorts)
+	ports := make(map[uint16]bool)
 
 	for i := 0; i < numPorts; i++ {
 		// ports are bytes copied directly from "the wire", thus they follow network endianess, which is big-endian
 		port := binary.BigEndian.Uint16(data[8+2*i : 10+2*i])
 		if port != 0 {
-			ports = append(ports, port)
+			ports[port] = true
 		}
 	}
 
@@ -37,4 +39,20 @@ func unmarshalIPMetric(data []byte) (*ipMetric, error) {
 	}
 
 	return &result, nil
+}
+
+// mergeIPMetric merge ipMetric coming from different CPUs into a single one
+func mergeIPMetric(metrics []*ipMetric) *ipMetric {
+	result := ipMetric{
+		synReceived: 0,
+		ports:       make(map[uint16]bool),
+	}
+	for _, cpuMetric := range metrics {
+		result.synReceived += cpuMetric.synReceived
+		for port := range cpuMetric.ports {
+			result.ports[port] = true
+		}
+	}
+
+	return &result
 }
