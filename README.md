@@ -48,6 +48,7 @@ clang
 llvm
 llvm-strip
 libc6-dev-i386
+make
 ```
 
 For building the container itself:
@@ -66,7 +67,7 @@ golangci-lint
 Build the bpf by running
 ```shell
 $ export BPF_CLANG=clang  # this can be clang-11/12/13/.. depending on your setup
-$ go generate ./bpf
+$ make bpf
 
 Compiled /home/shaka/perso/teleport-challenge/bpf/bpf_bpfel.o
 Stripped /home/shaka/perso/teleport-challenge/bpf/bpf_bpfel.o
@@ -78,12 +79,12 @@ Wrote /home/shaka/perso/teleport-challenge/bpf/bpf_bpfeb.go
 
 Build the go binary by running
 ```shell
-go build -o dist/ github.com/hugoshaka/teleport-challenge/cmd/teleport-challenge
+make build
 ```
 
 Build the docker container (this is a self-sufficient command, it will rebuild both bpf and golang)
 ```shell
-docker build . -t teleport-challenge
+make docker
 ```
 
 ## Running
@@ -92,9 +93,9 @@ With docker
 
 ```shell
 # For all kernels
-docker run -it --cap-add SYS_ADMIN --ulimit memlock=-1:-1 --network host teleport-challenge
+docker run -it --cap-add SYS_ADMIN --ulimit memlock=-1:-1 --network host hugoshaka/teleport-challenge:local
 # For linux >= 5.8
-docker run -it --cap-add BPF --ulimit memlock=-1:-1 --network host teleport-challenge
+docker run -it --cap-add BPF --ulimit memlock=-1:-1 --network host hugoshaka/teleport-challenge:local
 ```
 
 Without docker as root

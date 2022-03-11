@@ -1,6 +1,12 @@
 export BPF_CLANG ?= clang
 
-.PHONY: docker test end2end
+.PHONY: docker test end2end bpf build all
+
+all: bpf build docker
+
+build: dist/teleport-challenge
+
+bpf: bpf/bpf_bpfeb.go bpf/bpf_bpfeb.o bpf/bpf_bpfel.go bpf/bpf_bpfel.o
 
 docker:
 	docker build . -t hugoshaka/teleport-challenge:local
@@ -14,7 +20,7 @@ end2end:
 lint:
 	golangci-lint run -v
 
-bpf/bpf_%.go bpf/bpf_%.o: bpf/metrics.c bpf/types.h bpf/loader.go bpf/headers/
+bpf/bpf_%.go bpf/bpf_%.o: bpf/xdp.c bpf/types.h bpf/loader.go bpf/headers/
 	go generate ./bpf
 
 dist/teleport-challenge: $(shell find . -type f -iname *.go)
