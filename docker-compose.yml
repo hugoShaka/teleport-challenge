@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  server:
+    build: .
+    command: teleport-challenge --interface=eth0
+    cap_add:
+      - SYS_ADMIN
+    ulimits:
+      memlock: -1
+
+  user:
+    image: curlimages/curl
+    entrypoint: sh -c 'while true; do curl -sS http://server:8080/metrics > /dev/null ; sleep 5; done'
+    depends_on:
+      - server
+  attacker:
+    image: kalilinux/kali-last-release
+    command: bash -c 'apt-get -qq update && apt-get -qq install nmap -y && nmap --top-ports 100 -T5 server; sleep 90; nmap --top-ports 100 -T5 server'
+    depends_on:
+      - server
