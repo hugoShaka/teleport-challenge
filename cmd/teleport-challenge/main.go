@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/docopt/docopt-go"
 	"github.com/hugoshaka/teleport-challenge/bpf"
@@ -9,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/sync/errgroup"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -47,14 +49,19 @@ Options:
 
 	arguments, _ := docopt.ParseDoc(usage)
 	fmt.Println(arguments)
-	// TODO: get values from argv
 
 	rawTrackingPeriod, _ := arguments.String("--tracking-period")
 	trackingPeriod, _ := time.ParseDuration(rawTrackingPeriod)
 	rawBlockingPeriod, _ := arguments.String("--detect-scan-period")
 	blockingPeriod, _ := time.ParseDuration(rawBlockingPeriod)
 	blockThreshold, _ := arguments.Int("--threshold")
-	iface := 1
+	interfaceName, _ := arguments.String("--interface")
+
+	iface, err := findInterface(interfaceName)
+
+	if err != nil {
+		log.Fatalf("Error recovering interface: %v", err)
+	}
 
 	// Load BPF objects
 	trackingMap, metricMap, blockingMap := bpf.LoadAndAttach(iface)
@@ -122,4 +129,17 @@ func makeContext() (context.Context, func()) {
 		signal.Stop(c)
 		cancel()
 	}
+}
+
+func findInterface(name string) (int, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return 0, err
+	}
+	for _, iface := range ifaces {
+		if iface.Name == name {
+			return iface.Index, nil
+		}
+	}
+	return 0, errors.New("interface not found")
 }
