@@ -14,6 +14,7 @@ services:
     entrypoint: sh -c 'while true; do curl -sS http://server:8080/metrics > /dev/null ; sleep 5; done'
     depends_on:
       - server
+
   attacker:
     image: kalilinux/kali-last-release
     command: bash -c 'apt-get -qq update && apt-get -qq install nmap -y && nmap --top-ports 100 -T5 server; sleep 90; nmap --top-ports 100 -T5 server'

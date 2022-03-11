@@ -78,11 +78,6 @@ int xdp_prog_main(struct xdp_md *ctx) {
         return XDP_DROP;
     }
 
-    // We want to catch only the first packet of the three-way handshake: SYN, SYN+ACK, ACK.
-    if (!tcp_header->syn || tcp_header->ack){
-        return XDP_PASS;
-    }
-
     // We retrieve source and dest IP/port
     u32 source_ip = ip_header->saddr;
     u32 dest_ip = ip_header->daddr;
@@ -94,6 +89,11 @@ int xdp_prog_main(struct xdp_md *ctx) {
     blocked_time = bpf_map_lookup_elem(&ip_blocked_map, &source_ip);
     if (blocked_time) {
         return XDP_DROP;
+    }
+
+    // We want to catch only the first packet of the three-way handshake: SYN, SYN+ACK, ACK.
+    if (!tcp_header->syn || tcp_header->ack){
+        return XDP_PASS;
     }
 
     ip_metric *metric = NULL;
