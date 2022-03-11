@@ -2,11 +2,20 @@ package watchers
 
 import (
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"log"
 	"time"
 
 	"github.com/cilium/ebpf"
 	"inet.af/netaddr"
+)
+
+var (
+	scansDetected = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "teleportchallenge_scans_detected_total",
+		Help: "The number of port scans detected since the start of the application.",
+	})
 )
 
 // blockingWatcher reads the BPF metricMap and blocks IPs doing port scan via the blockingMap.
@@ -100,6 +109,7 @@ func (w *blockingWatcher) blockIP(ip netaddr.IP, metric *ipMetric) error {
 	}
 
 	log.Printf("Port scan detected: %v on ports %v", ip, ports)
+	scansDetected.Inc()
 
 	key := ip.As4()
 	blockTime := uint64(time.Now().Unix())

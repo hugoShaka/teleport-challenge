@@ -3,10 +3,19 @@ package watchers
 import (
 	"context"
 	"errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"log"
 	"time"
 
 	"github.com/cilium/ebpf"
+)
+
+var (
+	connectionsReceived = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "teleportchallenge_connections_received_total",
+		Help: "The amount of TCP connections received since the start of the application.",
+	})
 )
 
 // trackingWatcher reads the BPF trackingMap and logs all incoming connections.
@@ -51,6 +60,7 @@ func (w *trackingWatcher) printConnections() error {
 	for err = w.trackingMap.LookupAndDelete(nil, &rawConnection); err == nil; err = w.trackingMap.LookupAndDelete(nil, &rawConnection) {
 		connection := unmarshallTCPConnection(rawConnection)
 		log.Printf("New connection: %s", connection)
+		connectionsReceived.Inc()
 	}
 	if err != nil && !errors.Is(err, ebpf.ErrKeyNotExist) {
 		log.Printf("Error reading tcp_connection_tracking_map: %s", err)
