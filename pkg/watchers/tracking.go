@@ -3,12 +3,13 @@ package watchers
 import (
 	"context"
 	"errors"
-	"github.com/cilium/ebpf"
 	"log"
 	"time"
+
+	"github.com/cilium/ebpf"
 )
 
-// trackingWatcher reads the BPF trackingMap and logs all incoming connections
+// trackingWatcher reads the BPF trackingMap and logs all incoming connections.
 type trackingWatcher struct {
 	period      time.Duration
 	trackingMap *ebpf.Map
@@ -36,7 +37,6 @@ func (w *trackingWatcher) Run(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-
 		}
 	}
 

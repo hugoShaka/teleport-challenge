@@ -11,6 +11,9 @@ test:
 end2end:
 	docker-compose up --build
 
+lint:
+	golangci-lint run -v
+
 bpf/bpf_%.go bpf/bpf_%.o: bpf/metrics.c bpf/types.h bpf/loader.go bpf/headers/
 	go generate ./bpf
 

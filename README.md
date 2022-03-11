@@ -55,6 +55,12 @@ For building the container itself:
 docker
 ```
 
+For tests and lint:
+```shell
+docker-compose
+golangci-lint
+```
+
 ### Steps
 
 Build the bpf by running

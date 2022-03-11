@@ -4,17 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/docopt/docopt-go"
-	"github.com/hugoshaka/teleport-challenge/bpf"
-	"github.com/hugoshaka/teleport-challenge/pkg/watchers"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"golang.org/x/sync/errgroup"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/docopt/docopt-go"
+	"github.com/hugoshaka/teleport-challenge/bpf"
+	"github.com/hugoshaka/teleport-challenge/pkg/watchers"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -48,7 +49,6 @@ Options:
 	defer cancel()
 
 	arguments, _ := docopt.ParseDoc(usage)
-	fmt.Println(arguments)
 
 	rawTrackingPeriod, _ := arguments.String("--tracking-period")
 	trackingPeriod, _ := time.ParseDuration(rawTrackingPeriod)
@@ -100,8 +100,8 @@ Options:
 	// Wait for an error or context cancellation
 	exitCode := 0
 	if err := workGroup.Wait(); err != nil {
-		switch err {
-		case context.Canceled, http.ErrServerClosed:
+		switch {
+		case errors.Is(err, context.Canceled), errors.Is(err, http.ErrServerClosed):
 			log.Println("Shutting down")
 		default:
 			log.Printf("Unhandled error received: %v", err)

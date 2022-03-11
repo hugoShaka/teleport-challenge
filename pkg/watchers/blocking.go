@@ -2,13 +2,14 @@ package watchers
 
 import (
 	"context"
-	"github.com/cilium/ebpf"
-	"inet.af/netaddr"
 	"log"
 	"time"
+
+	"github.com/cilium/ebpf"
+	"inet.af/netaddr"
 )
 
-// blockingWatcher reads the BPF metricMap and blocks IPs doing port scan via the blockingMap
+// blockingWatcher reads the BPF metricMap and blocks IPs doing port scan via the blockingMap.
 type blockingWatcher struct {
 	blockingMap *ebpf.Map
 	metricMap   *ebpf.Map
@@ -33,14 +34,14 @@ func (w *blockingWatcher) Run(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			log.Println("Stopping blocking watcher")
+
 			return nil
 
 		default:
-			err := w.searchInfringingIPs(ctx)
+			err := w.searchInfringingIPs()
 			if err != nil {
 				return err
 			}
-
 		}
 	}
 
@@ -49,7 +50,7 @@ func (w *blockingWatcher) Run(ctx context.Context) error {
 
 // searchInfringingIPs consumes entirely the metricMap searching for source IPs that connected to too many
 // ports since the last tick. Infringing IPs are then added to the block list.
-func (w *blockingWatcher) searchInfringingIPs(ctx context.Context) error {
+func (w *blockingWatcher) searchInfringingIPs() error {
 	var key [4]byte
 	var value [][]byte
 	var ip netaddr.IP
@@ -80,15 +81,14 @@ func (w *blockingWatcher) searchInfringingIPs(ctx context.Context) error {
 		}
 	}
 
-	err := values.Err()
-	if err != nil {
+	if err := values.Err(); err != nil {
 		log.Printf("Error reading ip_metic_map: %s", err)
 		return err
 	}
 	return nil
 }
 
-// blockIP adds an IP to the blocking map
+// blockIP adds an IP to the blocking map.
 func (w *blockingWatcher) blockIP(ip netaddr.IP, metric *ipMetric) error {
 	ports := make([]uint16, len(metric.ports))
 
