@@ -16,12 +16,12 @@ import (
 )
 
 const (
-	metricsPort                = 8080
-	metricServerTimeoutSeconds = 5
+	metricsPort = 8080
 )
 
 var (
-	monitoringEndpoint = fmt.Sprintf(":%d", metricsPort)
+	monitoringEndpoint  = fmt.Sprintf(":%d", metricsPort)
+	metricServerTimeout = 5 * time.Second
 )
 
 func main() {
@@ -69,19 +69,21 @@ Options:
 	workGroup.Go(func() error { return blockingWatcher.Run(ctx) })
 
 	// Setup monitoring server
-	server := http.Server{
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+	server := &http.Server{
 		Addr:              monitoringEndpoint,
-		Handler:           promhttp.Handler(),
-		IdleTimeout:       metricServerTimeoutSeconds,
-		ReadTimeout:       metricServerTimeoutSeconds,
-		WriteTimeout:      metricServerTimeoutSeconds,
-		ReadHeaderTimeout: metricServerTimeoutSeconds,
+		Handler:           mux,
+		IdleTimeout:       metricServerTimeout,
+		ReadTimeout:       metricServerTimeout,
+		WriteTimeout:      metricServerTimeout,
+		ReadHeaderTimeout: metricServerTimeout,
 	}
 	workGroup.Go(func() error { return server.ListenAndServe() })
 	// To have a graceful shutdown we register a coroutine waiting for context cancellation and stopping the server
 	go func() {
 		if <-ctx.Done(); true {
-			stopCtx, cancel := context.WithTimeout(context.Background(), metricServerTimeoutSeconds*time.Second)
+			stopCtx, cancel := context.WithTimeout(context.Background(), metricServerTimeout)
 			defer cancel()
 			log.Println("Stopping monitoring server")
 			_ = server.Shutdown(stopCtx)
