@@ -28,6 +28,8 @@ The program might not detect connections if the amount of incoming connections
 between two timer ticks exceeds the map size. The program might not detect IP
 scans if the amount of connecting IPs exceeds the map size.
 
+This program requires a Linux kernel newer than 4.20.
+
 ### Security considerations
 
 The docker container has to run with `CAP_SYS_ADMIN` to be allowed to load and attach BPF programs.
