@@ -17,10 +17,16 @@ The golang program's job is to:
 
 Communication between BPF and userspace is done through BPF maps, see `./bpf/types.h` for more information.
 
+To do so it relies on two "watchers":
+* each watcher is woken up every X seconds/minute and reads its BPF map
+* the tracking watcher is logging the connections (by default every second)
+* the blocking watcher is detecting port scans and issuing blocks (by default every minute)
+
 ### Limitations
 
-The program might not detect connections if the amount of incoming connections between two timer ticks exceeds the map
-size. The program might not detect IP scans if the amount of connecting IPs exceeds the map size.
+The program might not detect connections if the amount of incoming connections
+between two timer ticks exceeds the map size. The program might not detect IP
+scans if the amount of connecting IPs exceeds the map size.
 
 ### Security considerations
 
