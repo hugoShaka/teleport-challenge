@@ -13,8 +13,7 @@ WORKDIR /src/app
 RUN go generate ./bpf && \
     go build -o dist/ github.com/hugoshaka/teleport-challenge/cmd/teleport-challenge
 
-# Should be switched to a gcr.io/distroless image for prod purposes, but for now I need the ability to pop a shell
-FROM debian:stable-slim AS final
+FROM gcr.io/distroless/base AS final
 
 COPY --from=build /src/app/dist/teleport-challenge /usr/local/bin/teleport-challenge
 
