@@ -38,8 +38,19 @@ As of March 2022, the latest Docker Engine version (20.10) doesn't support `CAP_
 even if the CHANGELOG says otherwise. See [docker.io issue](https://github.com/docker/docker.github.io/issues/13731).
 However both `containerd` and `cri-o` support this capability.
 
-The executable must be run as `root` as the BPF type is `BPF_PROG_TYPE_XDP` (this type allows manipulating packets
-as early as possible, before skb creation).
+The capability `CAP_NET_ADMIN` is required to attach XDP programs.
+`CAP_PERFMON` is required to read kernel memory and perform pointer comparison
+([more details](https://lore.kernel.org/bpf/20200513230355.7858-2-alexei.starovoitov@gmail.com/)
+
+The default seccomp profile rejects the `bpf` syscall even when `CAP_BPF` is
+granted. I don't think it makes sense and [opened an issue
+here](https://github.com/moby/moby/issues/43374). In the meantime it is advised
+to use [the custom seccomp profile](./seccomp-profile.json) instead of running
+unconfined.
+
+The executable must be run as `root` as the BPF type is `BPF_PROG_TYPE_XDP`
+(this type allows manipulating packets as early as possible, before skb
+creation).
 
 ## Building
 
@@ -68,10 +79,10 @@ docker-compose
 golangci-lint
 ```
 
-For running the container without docker
+For testing agianst specific kernels and containerd/nerdctl:
 ```
-containerd
-nerdctl
+rsync
+vagrant
 ```
 
 ### Steps
@@ -101,13 +112,15 @@ make docker
 
 ## Running
 
-With docker
+With docker:
 
 ```shell
-# For all kernels
-docker run -it --cap-add SYS_ADMIN --ulimit memlock=-1:-1 --network host hugoshaka/teleport-challenge:local
-# For linux >= 5.8
-docker run -it --cap-add BPF --ulimit memlock=-1:-1 --network host hugoshaka/teleport-challenge:local
+docker run -it --read-only --cap-add SYS_ADMIN --ulimit memlock=-1:-1 --network host hugoshaka/teleport-challenge:local
+```
+
+With containerd in vagrant box:
+```
+make vagrant-nerdctl
 ```
 
 Without docker as root

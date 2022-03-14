@@ -2,8 +2,10 @@ export BPF_CLANG ?= clang
 
 DOCKER_BIN ?= docker
 CAPABILITIES ?= --capp-add SYS_ADMIN
+SECURITY_OPTS ?=
 
-.PHONY: docker nerdctl test end2end bpf build all
+
+.PHONY: docker docker-run nerdctl nerdctl-run vagrant-nerdctl test end2end bpf build all
 
 all: bpf build docker
 
@@ -15,13 +17,14 @@ docker:
 	$(DOCKER_BIN) build . -t hugoshaka/teleport-challenge:local
 
 docker-run: docker
-	$(DOCKER_BIN) run -it --read-only $(CAPABILITIES) --ulimit memlock=-1:-1 --network host hugoshaka/teleport-challenge:local teleport-challenge
+	$(DOCKER_BIN) run -it --read-only $(CAPABILITIES) $(SECURITY_OPTS) --ulimit memlock=-1:-1 --network host hugoshaka/teleport-challenge:local teleport-challenge
 
 nerdctl: DOCKER_BIN=nerdctl
 nerdctl: docker
 
 nerdctl-run: DOCKER_BIN=nerdctl
 nerdctl-run: CAPABILITIES=--cap-add BPF --cap-add NET_ADMIN --cap-add CAP_PERFMON
+nerdctl-run: SECURITY_OPTS=--security-opt seccomp=./seccomp-profile.json
 nerdctl-run: docker-run
 
 test:
@@ -38,3 +41,8 @@ bpf/bpf_%.go bpf/bpf_%.o: bpf/xdp.c bpf/types.h bpf/loader.go bpf/headers/
 
 dist/teleport-challenge: $(shell find . -type f -iname *.go)
 	go build -o dist/ github.com/hugoshaka/teleport-challenge/cmd/teleport-challenge
+
+# this target allows to test containerd/nerdctl deployment without polluting
+vagrant-nerdctl:
+	vagrant up
+	vagrant ssh -c "cd /vagrant && sudo make nerdctl-run"
