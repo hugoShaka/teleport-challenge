@@ -34,6 +34,9 @@ This program requires a Linux kernel newer than 4.20.
 
 The docker container has to run with `CAP_SYS_ADMIN` to be allowed to load and attach BPF programs.
 This capability is overpowered and a saner one has been introduced since Linux 5.8: `CAP_BPF`.
+As of March 2022, the latest Docker Engine version (20.10) doesn't support `CAP_BPF`
+even if the CHANGELOG says otherwise. See [docker.io issue](https://github.com/docker/docker.github.io/issues/13731).
+However both `containerd` and `cri-o` support this capability.
 
 The executable must be run as `root` as the BPF type is `BPF_PROG_TYPE_XDP` (this type allows manipulating packets
 as early as possible, before skb creation).
@@ -54,6 +57,7 @@ make
 ```
 
 For building the container itself:
+
 ```shell
 docker
 ```
@@ -62,6 +66,12 @@ For tests and lint:
 ```shell
 docker-compose
 golangci-lint
+```
+
+For running the container without docker
+```
+containerd
+nerdctl
 ```
 
 ### Steps
