@@ -28,7 +28,7 @@ The program might not detect connections if the amount of incoming connections
 between two timer ticks exceeds the map size. The program might not detect IP
 scans if the amount of connecting IPs exceeds the map size.
 
-This program requires a Linux kernel newer than 4.20.
+This program requires a Linux kernel newer than 5.7 (because of the `bpf_link` usage).
 
 ### Security considerations
 
@@ -46,11 +46,12 @@ The default seccomp profile rejects the `bpf` syscall even when `CAP_BPF` is
 granted. I don't think it makes sense and [opened an issue
 here](https://github.com/moby/moby/issues/43374). In the meantime it is advised
 to use [the custom seccomp profile](./seccomp-profile.json) instead of running
-unconfined.
+unconfined. The seccomp profile could be reduced a lot, but I'd prefer to upstream
+the change instead of running a custom seccomp file _ad vitam aeternam_.
 
 The executable must be run as `root` as the BPF type is `BPF_PROG_TYPE_XDP`
 (this type allows manipulating packets as early as possible, before skb
-creation).
+creation). The filesystem can be read-only.
 
 ## Building
 
@@ -119,7 +120,7 @@ docker run -it --read-only --cap-add SYS_ADMIN --ulimit memlock=-1:-1 --network 
 ```
 
 With containerd in vagrant box:
-```
+```shell
 make vagrant-nerdctl
 ```
 
