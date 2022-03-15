@@ -558,13 +558,13 @@
 			"action": "SCMP_ACT_ALLOW",
 			"includes": {
 				"caps": [
-					"CAP_BPF"
+					"CAP_BPF",
+					"CAP_SYS_ADMIN"
 				]
 			}
 		},
 		{
 			"names": [
-				"bpf",
 				"clone",
 				"clone3",
 				"fanotify_init",

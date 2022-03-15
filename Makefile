@@ -1,7 +1,7 @@
 export BPF_CLANG ?= clang
 
 DOCKER_BIN ?= docker
-CAPABILITIES ?= --capp-add SYS_ADMIN
+CAPABILITIES ?= --cap-add SYS_ADMIN
 SECURITY_OPTS ?=
 
 

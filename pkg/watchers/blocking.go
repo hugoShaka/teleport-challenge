@@ -38,23 +38,19 @@ func NewBlockingWatcher(metricMap, blockingMap *ebpf.Map, period time.Duration, 
 func (w *blockingWatcher) Run(ctx context.Context) error {
 	ticker := time.NewTicker(w.period)
 
-	// I'm not happy with this as we have to wait for the next tick to exit, this slows down considerably the shutdown
-	for range ticker.C {
+	for {
 		select {
-		case <-ctx.Done():
-			log.Println("Stopping blocking watcher")
-
-			return nil
-
-		default:
+		case <-ticker.C:
 			err := w.searchInfringingIPs()
 			if err != nil {
 				return err
 			}
+
+		case <-ctx.Done():
+			log.Println("Stopping blocking watcher")
+			return nil
 		}
 	}
-
-	return nil
 }
 
 // searchInfringingIPs consumes entirely the metricMap searching for source IPs that connected to too many

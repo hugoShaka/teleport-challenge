@@ -35,21 +35,19 @@ func NewTrackingWatcher(trackingMap *ebpf.Map, period time.Duration) Watcher {
 func (w *trackingWatcher) Run(ctx context.Context) error {
 	ticker := time.NewTicker(w.period)
 
-	for range ticker.C {
+	for {
 		select {
-		case <-ctx.Done():
-			log.Println("Stopping tracking watcher")
-			return nil
-
-		default:
+		case <-ticker.C:
 			err := w.printConnections()
 			if err != nil {
 				return err
 			}
+
+		case <-ctx.Done():
+			log.Println("Stopping tracking watcher")
+			return nil
 		}
 	}
-
-	return nil
 }
 
 // printConnections reads all connections from the trackingMap and logs them

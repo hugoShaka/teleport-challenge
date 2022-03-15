@@ -2,4 +2,5 @@
 dist/
 .vagrant/
 
+*.log
 answers.md
